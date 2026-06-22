@@ -24,11 +24,14 @@ from dotenv import load_dotenv
 load_dotenv()  # picks up backend/.env if present; no-op if it doesn't exist
 
 ANTHROPIC_KEY = os.environ.get("ANTHROPIC_API_KEY")
+GEMINI_KEY = os.environ.get("GEMINI_API_KEY")
 OPENAI_KEY = os.environ.get("OPENAI_API_KEY")
 
 USE_ANTHROPIC = bool(ANTHROPIC_KEY)
-USE_OPENAI = bool(OPENAI_KEY) and not USE_ANTHROPIC
-USE_REAL_LLM = USE_ANTHROPIC or USE_OPENAI
+USE_GEMINI = bool(GEMINI_KEY) and not USE_ANTHROPIC
+USE_OPENAI = bool(OPENAI_KEY) and not USE_ANTHROPIC and not USE_GEMINI
+
+USE_REAL_LLM = USE_ANTHROPIC or USE_GEMINI or USE_OPENAI
 
 if USE_ANTHROPIC:
     import anthropic
@@ -39,6 +42,12 @@ if USE_OPENAI:
     from openai import OpenAI
     _openai_client = OpenAI(api_key=OPENAI_KEY)
     OPENAI_MODEL = "gpt-4o"
+
+if USE_GEMINI:
+    import google.generativeai as genai
+
+    genai.configure(api_key=GEMINI_KEY)
+    _gemini_model = genai.GenerativeModel("gemini-2.5-flash")   
 
 
 def call_llm_real(messages: list, tools: list, system: str) -> dict:
@@ -126,6 +135,25 @@ def call_llm_openai(messages: list, tools: list, system: str) -> dict:
 
     stop_reason = "tool_use" if msg.tool_calls else "end_turn"
     return {"stop_reason": stop_reason, "content": content_blocks}
+
+def call_llm_gemini(messages: list, tools: list, system: str) -> dict:
+    prompt = system + "\n\n"
+
+    for m in messages:
+        if m["role"] == "user" and isinstance(m["content"], str):
+            prompt += f"User: {m['content']}\n"
+
+    response = _gemini_model.generate_content(prompt)
+
+    return {
+        "stop_reason": "end_turn",
+        "content": [
+            {
+                "type": "text",
+                "text": response.text
+            }
+        ]
+    }
 
 
 def call_llm_mock(messages: list, tools: list, system: str) -> dict:
@@ -272,6 +300,11 @@ def _synthesize_final_answer(tool_results_so_far: dict) -> str:
 def call_llm(messages: list, tools: list, system: str) -> dict:
     if USE_ANTHROPIC:
         return call_llm_real(messages, tools, system)
+
+    if USE_GEMINI:
+        return call_llm_gemini(messages, tools, system)
+
     if USE_OPENAI:
         return call_llm_openai(messages, tools, system)
+
     return call_llm_mock(messages, tools, system)
