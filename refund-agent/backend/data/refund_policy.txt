@@ -1,0 +1,84 @@
+REFUND POLICY DOCUMENT
+Version 1.0 — Effective for all orders
+
+This document defines the rules our support agent must apply when
+evaluating a refund request. These rules are strict: the agent does not
+have discretion to override them based on tone, persistence, or customer
+tier, except where a rule explicitly grants an exception.
+
+--------------------------------------------------------------------------
+RULE 1 — Standard Refund Window
+Refunds for non-defective items must be requested within 30 days of the
+DELIVERY date (not the purchase date). Day 30 itself is the last valid
+day. Day 31 onward is outside policy, with no exceptions for membership
+tier, loyalty, or order value.
+
+RULE 2 — Defective / Damaged Items
+If the customer reports the item as defective or damaged, the window is
+extended to 60 days from delivery. Photo or video evidence of the damage
+is required before approval. Without evidence, treat as Rule 1 (standard
+window) unless the customer provides it.
+
+RULE 3 — Digital Goods
+Digital products (software licenses, downloads, digital media) are
+non-refundable once delivered/activated, regardless of the time window.
+Exception: if the product never activated due to a verified technical
+fault, escalate to manual review rather than auto-deny.
+
+RULE 4 — Final Sale / Clearance Items
+Items marked "final sale" or "clearance" at time of purchase are
+non-refundable. This overrides Rule 1 even if within the 30-day window.
+
+RULE 5 — Fraud / Abuse Signals
+If a customer has more than 2 refund requests within the last 30 days,
+auto-escalate the current request to manual human review, even if the
+current order is otherwise eligible under Rules 1-4. Do not auto-approve
+or auto-deny; a human must review.
+
+RULE 6 — Lost in Transit
+If an order's delivery status is "lost_in_transit" (i.e., never
+delivered), the customer is eligible for a full refund regardless of
+how much time has passed. This is a seller/carrier failure, not subject
+to the standard window.
+
+RULE 7 — Wrong Item Delivered
+If the delivery status indicates the wrong item was sent
+("delivered_wrong_item"), the customer is eligible for a full refund
+regardless of the time window. This is a fulfillment error.
+
+RULE 8 — Membership Tier
+Membership tier (standard / gold / platinum) does NOT grant exceptions
+to time-window rules (1-4). Tier may be used only as a tie-breaker in
+manual review cases, never to override an automatic denial.
+
+RULE 9 — Partial Refunds
+Used or opened items outside the standard window but within the
+defective window (Rule 2) with confirmed minor damage may be eligible
+for a partial refund (50%) instead of full, at the discretion of manual
+review. The automated agent should escalate these rather than decide.
+
+RULE 10 — Repeat Denial Appeals
+If a customer disputes a denial and provides no new evidence or
+information, the agent should reaffirm the original decision and explain
+the specific rule applied. The agent must not approve a previously
+denied request solely due to customer insistence.
+
+RULE 11 — Evidence Standards
+Acceptable evidence for damage/defect claims: clear photos showing the
+defect, an unboxing video, or a written description corroborated by
+order/category context. Evidence review is advisory; final eligibility
+is still governed by Rules 1-4.
+
+RULE 12 — Escalation Default
+Any case that does not cleanly resolve under Rules 1-9 (ambiguous
+evidence, conflicting signals, or a scenario not covered above) must be
+escalated to manual human review rather than guessed.
+--------------------------------------------------------------------------
+
+Summary decision priority (the agent should check in this order):
+1. Lost in transit / wrong item -> approve (Rules 6-7)
+2. Fraud signal (>2 refunds in 30 days) -> escalate (Rule 5)
+3. Final sale / digital goods -> deny (Rules 3-4, unless technical fault)
+4. Within standard or defective window -> approve
+5. Outside window, no special condition -> deny
+6. Anything unclear -> escalate (Rule 12)

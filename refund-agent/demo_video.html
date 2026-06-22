@@ -1,0 +1,483 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+<title>Refund Agent — Demo</title>
+<style>
+  :root {
+    --ink: #1c2024;
+    --ink-soft: #5a6169;
+    --paper: #fbfaf8;
+    --panel: #ffffff;
+    --line: #e4e1da;
+    --accent: #2d5c4d;
+    --deny: #8a3a2c;
+    --escalate: #8a6d1f;
+    --term-bg: #0f1210;
+    --term-line: #2a2f2b;
+    --term-text: #e7eee8;
+    --term-dim: #8a958c;
+    --tool: #7aa7d9;
+    --retry: #e0c050;
+  }
+  * { box-sizing: border-box; }
+  body {
+    margin: 0;
+    background: var(--paper);
+    color: var(--ink);
+    font-family: 'Iowan Old Style', 'Palatino Linotype', Georgia, serif;
+    overflow-x: hidden;
+  }
+  .stage {
+    width: 1280px;
+    height: 720px;
+    margin: 0 auto;
+    position: relative;
+    background: var(--paper);
+    overflow: hidden;
+  }
+  .scene {
+    position: absolute;
+    inset: 0;
+    display: none;
+    flex-direction: column;
+    padding: 56px 80px;
+  }
+  .scene.active { display: flex; }
+
+  .eyebrow {
+    font-family: 'SF Mono', Menlo, monospace;
+    font-size: 13px;
+    letter-spacing: 0.1em;
+    text-transform: uppercase;
+    color: var(--accent);
+    margin-bottom: 18px;
+  }
+  h1 {
+    font-size: 44px;
+    font-weight: 600;
+    line-height: 1.25;
+    margin: 0 0 22px;
+    max-width: 920px;
+  }
+  h1 i { color: var(--accent); font-style: italic; }
+  p.lede {
+    font-size: 21px;
+    line-height: 1.6;
+    color: var(--ink-soft);
+    max-width: 820px;
+    margin: 0;
+  }
+
+  .caption-bar {
+    position: absolute;
+    bottom: 40px;
+    left: 80px;
+    right: 80px;
+    font-family: 'SF Mono', Menlo, monospace;
+    font-size: 17px;
+    line-height: 1.6;
+    color: var(--ink);
+    background: var(--panel);
+    border: 1px solid var(--line);
+    border-radius: 10px;
+    padding: 16px 22px;
+    min-height: 30px;
+  }
+
+  /* Scene 2: architecture */
+  .arch-row { display: flex; align-items: center; justify-content: center; gap: 18px; margin-top: 50px; flex-wrap: wrap; }
+  .arch-box {
+    border: 1px solid var(--line);
+    background: var(--panel);
+    border-radius: 10px;
+    padding: 16px 20px;
+    font-family: 'SF Mono', Menlo, monospace;
+    font-size: 14px;
+    text-align: center;
+    min-width: 150px;
+    opacity: 0;
+    transform: translateY(12px);
+    transition: opacity 0.5s, transform 0.5s;
+  }
+  .arch-box.show { opacity: 1; transform: translateY(0); }
+  .arch-box.agent { border-color: var(--accent); color: var(--accent); font-weight: 600; }
+  .arch-arrow { font-size: 22px; color: var(--ink-soft); opacity: 0; transition: opacity 0.4s; }
+  .arch-arrow.show { opacity: 1; }
+
+  /* Scene 3/4: chat mockup */
+  .chat-wrap { display: flex; gap: 36px; flex: 1; margin-top: 14px; }
+  .chat-window {
+    flex: 1.1;
+    background: var(--panel);
+    border: 1px solid var(--line);
+    border-radius: 12px;
+    display: flex;
+    flex-direction: column;
+    overflow: hidden;
+  }
+  .chat-header {
+    padding: 14px 20px;
+    border-bottom: 1px solid var(--line);
+    font-size: 15px;
+    font-weight: 600;
+    display: flex;
+    justify-content: space-between;
+  }
+  .chat-header span { color: var(--accent); font-style: italic; font-weight: 400; }
+  .chat-body { flex: 1; padding: 18px 20px; display: flex; flex-direction: column; gap: 12px; overflow: hidden; }
+  .msg {
+    max-width: 84%;
+    padding: 11px 15px;
+    border-radius: 10px;
+    font-size: 15px;
+    line-height: 1.5;
+    opacity: 0;
+    transform: translateY(8px);
+    transition: opacity 0.4s, transform 0.4s;
+  }
+  .msg.show { opacity: 1; transform: translateY(0); }
+  .msg.user { align-self: flex-end; background: var(--ink); color: var(--paper); border-bottom-right-radius: 3px; }
+  .msg.agent { align-self: flex-start; background: var(--paper); border: 1px solid var(--line); border-bottom-left-radius: 3px; }
+  .msg.agent.approve { border-left: 3px solid var(--accent); }
+  .msg.agent.deny { border-left: 3px solid var(--deny); }
+  .msg.agent.escalate { border-left: 3px solid var(--escalate); }
+  .cursor-blink { display: inline-block; width: 2px; height: 14px; background: var(--ink); margin-left: 1px; animation: blink 1s steps(1) infinite; vertical-align: -2px; }
+  @keyframes blink { 50% { opacity: 0; } }
+
+  /* admin trace panel */
+  .trace-window {
+    flex: 0.9;
+    background: var(--term-bg);
+    border-radius: 12px;
+    overflow: hidden;
+    display: flex;
+    flex-direction: column;
+  }
+  .trace-header { padding: 12px 18px; border-bottom: 1px solid var(--term-line); font-family: 'SF Mono', Menlo, monospace; font-size: 12px; color: var(--term-text); display: flex; justify-content: space-between; }
+  .trace-header .live { color: #6fcf97; }
+  .trace-body { flex: 1; padding: 12px 18px; overflow: hidden; font-family: 'SF Mono', Menlo, monospace; font-size: 12px; }
+  .trace-row { display: flex; gap: 10px; padding: 7px 0; border-bottom: 1px solid var(--term-line); opacity: 0; transform: translateX(-6px); transition: opacity 0.3s, transform 0.3s; }
+  .trace-row.show { opacity: 1; transform: translateX(0); }
+  .trace-kind { font-size: 10px; padding: 2px 7px; border-radius: 4px; text-transform: uppercase; height: fit-content; white-space: nowrap; }
+  .trace-kind.tool_call { background: rgba(122,167,217,0.15); color: var(--tool); }
+  .trace-kind.retry { background: rgba(224,192,80,0.15); color: var(--retry); }
+  .trace-kind.decision { background: rgba(111,207,151,0.15); color: #6fcf97; }
+  .trace-name { color: var(--term-text); }
+  .trace-meta { color: var(--term-dim); font-size: 11px; }
+
+  /* progress + controls */
+  .controls {
+    position: fixed;
+    bottom: 0; left: 0; right: 0;
+    display: flex;
+    align-items: center;
+    gap: 14px;
+    padding: 14px 24px;
+    background: rgba(255,255,255,0.96);
+    border-top: 1px solid var(--line);
+    font-family: 'SF Mono', Menlo, monospace;
+    font-size: 12px;
+    z-index: 10;
+  }
+  .controls button {
+    font-family: inherit;
+    font-size: 13px;
+    padding: 8px 16px;
+    border-radius: 8px;
+    border: 1px solid var(--line);
+    background: var(--panel);
+    cursor: pointer;
+  }
+  .controls button:hover { border-color: var(--accent); color: var(--accent); }
+  .progress-track { flex: 1; height: 4px; background: var(--line); border-radius: 2px; overflow: hidden; }
+  .progress-fill { height: 100%; width: 0%; background: var(--accent); transition: width 0.2s linear; }
+  .scene-label { color: var(--ink-soft); min-width: 90px; }
+
+  /* end card */
+  .end-card { display: flex; flex-direction: column; align-items: center; justify-content: center; height: 100%; text-align: center; }
+  .end-card h1 { font-size: 36px; }
+  .end-card .repo { font-family: 'SF Mono', Menlo, monospace; font-size: 16px; color: var(--accent); margin-top: 8px; }
+</style>
+</head>
+<body>
+
+<div class="stage" id="stage">
+
+  <!-- SCENE 1 -->
+  <div class="scene active" data-scene="1">
+    <div class="eyebrow">Refund agent — project walkthrough</div>
+    <h1>An AI support agent that approves, denies, or escalates refunds<br/>against a <i>strict, deterministic</i> policy.</h1>
+    <p class="lede">Built for e-commerce teams who need every refund decision to be consistent, explainable, and fast — at any scale, from a small store to an Amazon-sized catalog.</p>
+    <div class="caption-bar" id="caption-1">Every e-commerce company faces the same problem: refund requests come in by the thousands, and every one needs a consistent, defensible decision.</div>
+  </div>
+
+  <!-- SCENE 2: architecture -->
+  <div class="scene" data-scene="2">
+    <div class="eyebrow">Architecture</div>
+    <h1>One agent, not seven.</h1>
+    <p class="lede">The language model's only job is to understand the customer and pick a tool. It never decides eligibility itself — that comes from deterministic code.</p>
+    <div class="arch-row" id="arch-row">
+      <div class="arch-box agent" id="ab-1">Agent<br/><span style="font-weight:400;color:var(--ink-soft);font-size:12px;">Claude — conversation only</span></div>
+      <div class="arch-arrow" id="aa-1">&#8594;</div>
+      <div class="arch-box" id="ab-2">Policy engine<br/><span style="font-weight:400;color:var(--ink-soft);font-size:12px;">deterministic rules</span></div>
+      <div class="arch-arrow" id="aa-2">&#8594;</div>
+      <div class="arch-box" id="ab-3">Fraud check<br/><span style="font-weight:400;color:var(--ink-soft);font-size:12px;">deterministic scoring</span></div>
+      <div class="arch-arrow" id="aa-3">&#8594;</div>
+      <div class="arch-box" id="ab-4">Decision<br/><span style="font-weight:400;color:var(--ink-soft);font-size:12px;">approve / deny / escalate</span></div>
+    </div>
+    <div class="caption-bar" id="caption-2">A Python function can't be talked around. That's what makes the policy actually strict.</div>
+  </div>
+
+  <!-- SCENE 3: standard approval demo -->
+  <div class="scene" data-scene="3">
+    <div class="eyebrow">Live demo — standard approval</div>
+    <div class="chat-wrap">
+      <div class="chat-window">
+        <div class="chat-header">Northwind Goods <span>Support</span></div>
+        <div class="chat-body" id="chat-body-3"></div>
+      </div>
+      <div class="trace-window">
+        <div class="trace-header"><span>Reasoning trace</span><span class="live">&#9679; live</span></div>
+        <div class="trace-body" id="trace-body-3"></div>
+      </div>
+    </div>
+    <div class="caption-bar" id="caption-3">A standard request, well within the thirty-day window — clean approval, citing the exact rule applied.</div>
+  </div>
+
+  <!-- SCENE 4: edge case + hold the line -->
+  <div class="scene" data-scene="4">
+    <div class="eyebrow">Live demo — holding the line</div>
+    <div class="chat-wrap">
+      <div class="chat-window">
+        <div class="chat-header">Northwind Goods <span>Support</span></div>
+        <div class="chat-body" id="chat-body-4"></div>
+      </div>
+      <div class="trace-window">
+        <div class="trace-header"><span>Reasoning trace</span><span class="live">&#9679; live</span></div>
+        <div class="trace-body" id="trace-body-4"></div>
+      </div>
+    </div>
+    <div class="caption-bar" id="caption-4">Five days past the window — denied, with the rule named. Watch what happens when the customer pushes back.</div>
+  </div>
+
+  <!-- SCENE 5: future + amazon scale -->
+  <div class="scene" data-scene="5">
+    <div class="eyebrow">What's next</div>
+    <h1>Built to extend — without retraining anything.</h1>
+    <p class="lede">Voice is already wired as a transport into the same agent loop. Image and video evidence review is scaffolded the same way. At Amazon's scale, the pattern that matters is separating <i>the policy</i> from <i>the conversation</i> — so a policy change is a code change, not a prompt-engineering gamble across millions of requests.</p>
+    <div class="arch-row" style="margin-top:60px;">
+      <div class="arch-box show" style="border-color:var(--accent);color:var(--accent);">Voice<br/><span style="font-weight:400;color:var(--ink-soft);font-size:12px;">same agent loop</span></div>
+      <div class="arch-box show" style="border-color:var(--accent);color:var(--accent);">Evidence / image review<br/><span style="font-weight:400;color:var(--ink-soft);font-size:12px;">scaffolded</span></div>
+      <div class="arch-box show" style="border-color:var(--accent);color:var(--accent);">Multi-language<br/><span style="font-weight:400;color:var(--ink-soft);font-size:12px;">conversation layer only</span></div>
+    </div>
+    <div class="caption-bar" id="caption-5">Thousands of decisions an hour, each one consistent, explainable, and fast to update when policy changes.</div>
+  </div>
+
+  <!-- SCENE 6: end card -->
+  <div class="scene" data-scene="6">
+    <div class="end-card">
+      <h1>Refund Agent</h1>
+      <p class="lede" style="margin-top:6px;">One agent. A strict policy engine underneath it.<br/>A fully auditable trail for every decision it makes.</p>
+      <div class="repo" id="repo-url">&larr; replace with your real GitHub repo URL before recording</div>
+    </div>
+  </div>
+
+</div>
+
+<div class="controls">
+  <button id="play-btn" onclick="togglePlay()">&#9654; Play</button>
+  <span class="scene-label" id="scene-label">Scene 1 / 6</span>
+  <div class="progress-track"><div class="progress-fill" id="progress-fill"></div></div>
+  <button onclick="restart()">&#8634; Restart</button>
+  <label style="display:flex;align-items:center;gap:6px;cursor:pointer;">
+    <input type="checkbox" id="voice-toggle" checked /> Spoken narration
+  </label>
+</div>
+
+<script>
+/*
+  Self-playing demo "video" -- a single HTML file that animates through
+  6 scenes automatically, typing out a real chat conversation, populating
+  a live reasoning trace, and (if the browser supports it) speaking the
+  narration aloud via the Web Speech API.
+
+  Purpose: this is the closest thing to an actual rendered video that can
+  be produced as a static file with no recording/editing tools. Open this
+  file in a browser, click Play, and either:
+    (a) screen-record the browser tab for ~3 minutes to get an MP4, or
+    (b) present it live from the browser tab directly.
+
+  Narration text below matches video_script.md exactly.
+*/
+
+const NARRATION = {
+  1: "Every e-commerce company faces the same problem: refund requests come in by the thousands, and every single one needs a consistent, defensible decision. Too lenient, and you bleed margin to abuse. Too strict, and you lose loyal customers over a five-day technicality. This is a refund support agent that solves that problem, not by asking an A I to use its judgment, but by giving it a strict, deterministic policy engine to enforce, and just enough language understanding to explain that decision like a human would.",
+  2: "Here's the core design decision: this is one agent, not seven. The language model's only job is to understand the customer, decide which tool to call, and explain the outcome. It never decides eligibility itself. That decision comes from plain, testable Python functions, a policy engine and a fraud scoring function, so the rules can't drift or get talked around, no matter how the conversation goes.",
+  3: "Let's see it work. A standard request, well within the thirty day window. Clean approval, and the agent cites the exact rule it applied.",
+  4: "Now the harder case, a request five days past the window. The agent denies it and names the specific rule. Watch what happens when the customer pushes back emotionally. It holds the line. Because the decision isn't coming from the model's mood in the moment, it's coming from the same deterministic check, every time. That consistency is the entire point.",
+  5: "Right now this runs on fifteen mock customers and a documented policy, deliberately scoped, so the core logic is provable end to end. But the shape is built to extend. Voice is already wired as a transport layer into the same agent loop. Image and video evidence review is scaffolded the same way. At Amazon's scale, this pattern is exactly what matters: thousands of refund decisions an hour, each one needing to be consistent, explainable, and fast to update when policy changes, without retraining a model or hoping an L L M interprets a new rule the same way twice.",
+  6: "That's the project. One agent, a strict policy engine underneath it, and a fully auditable trail for every decision it makes."
+};
+
+const CHAT_3 = [
+  { role: 'user', text: "Hi, order ORD1001, customer CUST001, I changed my mind and want a refund" },
+  { role: 'agent', cls: 'approve', text: "Good news — your refund has been approved. Request is within the standard 30-day window (10 days since delivery). Eligible per Rule 1." }
+];
+const TRACE_3 = [
+  { kind: 'tool_call', name: 'lookup_customer', meta: '{"identifier": "CUST001"}' },
+  { kind: 'tool_call', name: 'lookup_order', meta: '{"order_id": "ORD1001"}' },
+  { kind: 'tool_call', name: 'check_refund_policy', meta: '{"decision": "approve", "rule_applied": "RULE_1"}' },
+  { kind: 'tool_call', name: 'check_fraud_signals', meta: '{"risk_level": "low", "flag": false}' },
+  { kind: 'decision', name: 'final_response', meta: 'approved' }
+];
+
+const CHAT_4 = [
+  { role: 'user', text: "Hi, order ORD1005, customer CUST005, I changed my mind and want a refund" },
+  { role: 'agent', cls: 'deny', text: "I'm sorry, but I can't approve this refund. Request is outside the standard 30-day refund window (35 days since delivery, 5 days over). Per Rule 1, this applies regardless of membership tier or order history (Rule 8)." },
+  { role: 'user', text: "I've been a loyal customer for years, please make an exception!" },
+  { role: 'agent', cls: 'deny', text: "I understand the frustration, but the window is the window. Rule 1 applies regardless of tenure (Rule 8) — I can't override that, but I'm happy to flag this for a supervisor if you'd like." }
+];
+const TRACE_4 = [
+  { kind: 'tool_call', name: 'lookup_customer', meta: '{"identifier": "CUST005"}' },
+  { kind: 'retry', name: 'lookup_order', meta: 'transient timeout, retrying...' },
+  { kind: 'tool_call', name: 'lookup_order', meta: '{"order_id": "ORD1005"}' },
+  { kind: 'tool_call', name: 'check_refund_policy', meta: '{"decision": "deny", "rule_applied": "RULE_1"}' },
+  { kind: 'decision', name: 'final_response', meta: 'denied — Rule 1' },
+  { kind: 'tool_call', name: 'check_refund_policy', meta: 're-checked on pushback — same result' },
+  { kind: 'decision', name: 'final_response', meta: 'denial held' }
+];
+
+let playing = false;
+let currentScene = 1;
+const TOTAL_SCENES = 6;
+let sceneTimer = null;
+let typeTimers = [];
+
+function clearTypeTimers() { typeTimers.forEach(t => clearTimeout(t)); typeTimers = []; }
+
+function speak(text) {
+  if (!document.getElementById('voice-toggle').checked) return null;
+  if (!('speechSynthesis' in window)) return null;
+  window.speechSynthesis.cancel();
+  const u = new SpeechSynthesisUtterance(text);
+  u.rate = 1.0;
+  u.pitch = 1.0;
+  window.speechSynthesis.speak(u);
+  return u;
+}
+
+function typeChatScene(chatId, traceId, messages, traceRows) {
+  const chatEl = document.getElementById(chatId);
+  const traceEl = document.getElementById(traceId);
+  chatEl.innerHTML = '';
+  traceEl.innerHTML = '';
+  let delay = 200;
+
+  messages.forEach((m) => {
+    typeTimers.push(setTimeout(() => {
+      const div = document.createElement('div');
+      div.className = `msg ${m.role}` + (m.cls ? ` ${m.cls}` : '');
+      div.textContent = m.text;
+      chatEl.appendChild(div);
+      requestAnimationFrame(() => div.classList.add('show'));
+    }, delay));
+    delay += 1100;
+  });
+
+  let traceDelay = 400;
+  traceRows.forEach((r) => {
+    typeTimers.push(setTimeout(() => {
+      const row = document.createElement('div');
+      row.className = 'trace-row';
+      row.innerHTML = `<span class="trace-kind ${r.kind}">${r.kind}</span><span><span class="trace-name">${r.name}</span><br/><span class="trace-meta">${r.meta}</span></span>`;
+      traceEl.appendChild(row);
+      requestAnimationFrame(() => row.classList.add('show'));
+    }, traceDelay));
+    traceDelay += 480;
+  });
+}
+
+function animateArch() {
+  const ids = ['ab-1', 'aa-1', 'ab-2', 'aa-2', 'ab-3', 'aa-3', 'ab-4'];
+  ids.forEach((id, i) => {
+    typeTimers.push(setTimeout(() => {
+      document.getElementById(id).classList.add('show');
+    }, 300 + i * 320));
+  });
+}
+
+function showScene(n) {
+  document.querySelectorAll('.scene').forEach(s => s.classList.remove('active'));
+  document.querySelector(`.scene[data-scene="${n}"]`).classList.add('active');
+  document.getElementById('scene-label').textContent = `Scene ${n} / ${TOTAL_SCENES}`;
+  clearTypeTimers();
+
+  if (n === 2) animateArch();
+  if (n === 3) typeChatScene('chat-body-3', 'trace-body-3', CHAT_3, TRACE_3);
+  if (n === 4) typeChatScene('chat-body-4', 'trace-body-4', CHAT_4, TRACE_4);
+}
+
+const SCENE_DURATIONS = { 1: 38000, 2: 29500, 3: 12000, 4: 27000, 5: 43500, 6: 11000 };
+
+function advance() {
+  if (!playing) return;
+  currentScene++;
+  if (currentScene > TOTAL_SCENES) { playing = false; document.getElementById('play-btn').innerHTML = '&#9654; Play'; return; }
+  showScene(currentScene);
+  speak(NARRATION[currentScene]);
+  runProgress(SCENE_DURATIONS[currentScene]);
+  sceneTimer = setTimeout(advance, SCENE_DURATIONS[currentScene]);
+}
+
+function runProgress(duration) {
+  const fill = document.getElementById('progress-fill');
+  fill.style.transition = 'none';
+  fill.style.width = '0%';
+  requestAnimationFrame(() => {
+    fill.style.transition = `width ${duration}ms linear`;
+    fill.style.width = '100%';
+  });
+}
+
+function togglePlay() {
+  playing = !playing;
+  document.getElementById('play-btn').innerHTML = playing ? '&#10074;&#10074; Pause' : '&#9654; Play';
+  if (playing) {
+    if (currentScene === 1 && !document.querySelector('.scene[data-scene="1"]').dataset.played) {
+      document.querySelector('.scene[data-scene="1"]').dataset.played = '1';
+      speak(NARRATION[1]);
+      runProgress(SCENE_DURATIONS[1]);
+      sceneTimer = setTimeout(advance, SCENE_DURATIONS[1]);
+    } else {
+      runProgress(SCENE_DURATIONS[currentScene]);
+      sceneTimer = setTimeout(advance, SCENE_DURATIONS[currentScene]);
+    }
+  } else {
+    clearTimeout(sceneTimer);
+    window.speechSynthesis.cancel();
+    document.getElementById('progress-fill').style.transition = 'none';
+  }
+}
+
+function restart() {
+  clearTimeout(sceneTimer);
+  clearTypeTimers();
+  window.speechSynthesis.cancel();
+  playing = false;
+  currentScene = 1;
+  document.getElementById('play-btn').innerHTML = '&#9654; Play';
+  document.getElementById('progress-fill').style.transition = 'none';
+  document.getElementById('progress-fill').style.width = '0%';
+  document.querySelectorAll('.scene').forEach(s => delete s.dataset.played);
+  showScene(1);
+}
+
+document.addEventListener('keydown', (e) => {
+  if (e.code === 'Space') { e.preventDefault(); togglePlay(); }
+});
+</script>
+
+</body>
+</html>

@@ -1,0 +1,152 @@
+[
+  {
+    "customer_id": "CUST001",
+    "name": "Asha Reddy",
+    "email": "asha.reddy@example.com",
+    "membership_tier": "standard",
+    "account_created": "2023-02-14",
+    "refund_count_lifetime": 1,
+    "refund_count_last_30_days": 0,
+    "notes": "Clean history. Easy approval case."
+  },
+  {
+    "customer_id": "CUST002",
+    "name": "Liam O'Connor",
+    "email": "liam.oconnor@example.com",
+    "membership_tier": "standard",
+    "account_created": "2024-11-01",
+    "refund_count_lifetime": 0,
+    "refund_count_last_30_days": 0,
+    "notes": "New account, first refund request ever."
+  },
+  {
+    "customer_id": "CUST003",
+    "name": "Priya Nair",
+    "email": "priya.nair@example.com",
+    "membership_tier": "gold",
+    "account_created": "2021-06-30",
+    "refund_count_lifetime": 3,
+    "refund_count_last_30_days": 0,
+    "notes": "Long-time gold member, no red flags."
+  },
+  {
+    "customer_id": "CUST004",
+    "name": "Marcus Webb",
+    "email": "marcus.webb@example.com",
+    "membership_tier": "standard",
+    "account_created": "2024-01-10",
+    "refund_count_lifetime": 5,
+    "refund_count_last_30_days": 3,
+    "notes": "EDGE CASE: 3 refunds in last 30 days -> should trigger fraud escalation."
+  },
+  {
+    "customer_id": "CUST005",
+    "name": "Sara Kim",
+    "email": "sara.kim@example.com",
+    "membership_tier": "standard",
+    "account_created": "2022-09-21",
+    "refund_count_lifetime": 0,
+    "refund_count_last_30_days": 0,
+    "notes": "EDGE CASE: requesting refund 5 days past the 30-day window. Policy violation demo."
+  },
+  {
+    "customer_id": "CUST006",
+    "name": "David Chen",
+    "email": "david.chen@example.com",
+    "membership_tier": "platinum",
+    "account_created": "2019-03-05",
+    "refund_count_lifetime": 2,
+    "refund_count_last_30_days": 0,
+    "notes": "EDGE CASE: VIP/platinum tier, tests whether policy has tier exceptions (it should NOT for hard date windows)."
+  },
+  {
+    "customer_id": "CUST007",
+    "name": "Fatima Al-Sayed",
+    "email": "fatima.alsayed@example.com",
+    "membership_tier": "standard",
+    "account_created": "2023-07-19",
+    "refund_count_lifetime": 1,
+    "refund_count_last_30_days": 0,
+    "notes": "Damaged item claim, within 60-day defective window. Needs evidence."
+  },
+  {
+    "customer_id": "CUST008",
+    "name": "Tom Becker",
+    "email": "tom.becker@example.com",
+    "membership_tier": "standard",
+    "account_created": "2024-05-12",
+    "refund_count_lifetime": 0,
+    "refund_count_last_30_days": 0,
+    "notes": "Requesting refund on a digital download -- should be denied per policy (non-refundable once activated)."
+  },
+  {
+    "customer_id": "CUST009",
+    "name": "Anjali Mehta",
+    "email": "anjali.mehta@example.com",
+    "membership_tier": "gold",
+    "account_created": "2020-12-01",
+    "refund_count_lifetime": 4,
+    "refund_count_last_30_days": 1,
+    "notes": "Normal gold customer, one recent refund, within policy."
+  },
+  {
+    "customer_id": "CUST010",
+    "name": "James Okafor",
+    "email": "james.okafor@example.com",
+    "membership_tier": "standard",
+    "account_created": "2024-08-08",
+    "refund_count_lifetime": 0,
+    "refund_count_last_30_days": 0,
+    "notes": "Requesting refund on clearance/final-sale item -- should be denied per policy."
+  },
+  {
+    "customer_id": "CUST011",
+    "name": "Elena Petrova",
+    "email": "elena.petrova@example.com",
+    "membership_tier": "standard",
+    "account_created": "2023-04-23",
+    "refund_count_lifetime": 1,
+    "refund_count_last_30_days": 0,
+    "notes": "Standard valid refund, within window, no issues."
+  },
+  {
+    "customer_id": "CUST012",
+    "name": "Raj Patel",
+    "email": "raj.patel@example.com",
+    "membership_tier": "standard",
+    "account_created": "2024-02-17",
+    "refund_count_lifetime": 6,
+    "refund_count_last_30_days": 4,
+    "notes": "EDGE CASE: heavy refund history, high fraud signal. Should route to manual review even with a valid-looking order."
+  },
+  {
+    "customer_id": "CUST013",
+    "name": "Grace Lin",
+    "email": "grace.lin@example.com",
+    "membership_tier": "platinum",
+    "account_created": "2018-10-30",
+    "refund_count_lifetime": 2,
+    "refund_count_last_30_days": 0,
+    "notes": "Loyal platinum customer, requesting refund exactly on the last valid day of the window (boundary test)."
+  },
+  {
+    "customer_id": "CUST014",
+    "name": "Omar Siddiqui",
+    "email": "omar.siddiqui@example.com",
+    "membership_tier": "standard",
+    "account_created": "2024-09-14",
+    "refund_count_lifetime": 0,
+    "refund_count_last_30_days": 0,
+    "notes": "Order never delivered (lost in transit) -- separate policy rule, should be approved regardless of window."
+  },
+  {
+    "customer_id": "CUST015",
+    "name": "Nina Volkov",
+    "email": "nina.volkov@example.com",
+    "membership_tier": "standard",
+    "account_created": "2023-11-02",
+    "refund_count_lifetime": 1,
+    "refund_count_last_30_days": 0,
+    "notes": "Wrong item received -- separate policy rule (seller error), should be approved regardless of window."
+  }
+]

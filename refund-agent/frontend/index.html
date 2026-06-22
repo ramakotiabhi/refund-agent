@@ -1,0 +1,328 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+<title>Support — Refund Assistant</title>
+<style>
+  :root {
+    --ink: #1c2024;
+    --ink-soft: #5a6169;
+    --paper: #fbfaf8;
+    --panel: #ffffff;
+    --line: #e4e1da;
+    --accent: #2d5c4d;       /* deep pine -- trust, not alarm */
+    --accent-soft: #e7f0ec;
+    --deny: #8a3a2c;
+    --deny-soft: #f5e9e5;
+    --escalate: #8a6d1f;
+    --escalate-soft: #f6efdc;
+    --radius: 10px;
+  }
+
+  * { box-sizing: border-box; }
+
+  body {
+    margin: 0;
+    background: var(--paper);
+    color: var(--ink);
+    font-family: 'Iowan Old Style', 'Palatino Linotype', Georgia, serif;
+    min-height: 100vh;
+    display: flex;
+    flex-direction: column;
+  }
+
+  header {
+    padding: 22px 28px 18px;
+    border-bottom: 1px solid var(--line);
+    display: flex;
+    align-items: baseline;
+    justify-content: space-between;
+  }
+
+  header .brand {
+    font-size: 20px;
+    font-weight: 600;
+    letter-spacing: 0.01em;
+  }
+
+  header .brand span {
+    color: var(--accent);
+    font-style: italic;
+  }
+
+  header .tag {
+    font-family: 'SF Mono', 'Menlo', monospace;
+    font-size: 11px;
+    color: var(--ink-soft);
+    text-transform: uppercase;
+    letter-spacing: 0.08em;
+  }
+
+  main {
+    flex: 1;
+    display: flex;
+    justify-content: center;
+    padding: 32px 20px 24px;
+  }
+
+  .chat-shell {
+    width: 100%;
+    max-width: 640px;
+    display: flex;
+    flex-direction: column;
+    height: calc(100vh - 160px);
+  }
+
+  .hint-bar {
+    font-family: 'SF Mono', 'Menlo', monospace;
+    font-size: 12px;
+    color: var(--ink-soft);
+    background: var(--panel);
+    border: 1px solid var(--line);
+    border-radius: var(--radius);
+    padding: 10px 14px;
+    margin-bottom: 16px;
+    line-height: 1.6;
+  }
+  .hint-bar b { color: var(--ink); }
+
+  .messages {
+    flex: 1;
+    overflow-y: auto;
+    display: flex;
+    flex-direction: column;
+    gap: 14px;
+    padding: 4px 4px 16px;
+  }
+
+  .msg {
+    max-width: 80%;
+    padding: 13px 16px;
+    border-radius: var(--radius);
+    line-height: 1.55;
+    font-size: 15.5px;
+  }
+
+  .msg.user {
+    align-self: flex-end;
+    background: var(--ink);
+    color: var(--paper);
+    border-bottom-right-radius: 3px;
+  }
+
+  .msg.agent {
+    align-self: flex-start;
+    background: var(--panel);
+    border: 1px solid var(--line);
+    border-bottom-left-radius: 3px;
+  }
+
+  .msg.agent.decision-approve { border-left: 3px solid var(--accent); }
+  .msg.agent.decision-deny { border-left: 3px solid var(--deny); }
+  .msg.agent.decision-escalate { border-left: 3px solid var(--escalate); }
+
+  .msg.system {
+    align-self: center;
+    color: var(--ink-soft);
+    font-size: 12px;
+    font-family: 'SF Mono', 'Menlo', monospace;
+    background: none;
+    padding: 4px;
+  }
+
+  .typing {
+    align-self: flex-start;
+    font-family: 'SF Mono', 'Menlo', monospace;
+    font-size: 12px;
+    color: var(--ink-soft);
+    padding: 6px 16px;
+  }
+
+  .composer {
+    display: flex;
+    gap: 10px;
+    margin-top: 8px;
+  }
+
+  .composer input {
+    flex: 1;
+    font-family: inherit;
+    font-size: 15.5px;
+    padding: 13px 16px;
+    border-radius: var(--radius);
+    border: 1px solid var(--line);
+    background: var(--panel);
+    color: var(--ink);
+  }
+
+  .composer input:focus {
+    outline: 2px solid var(--accent);
+    outline-offset: 1px;
+  }
+
+  .composer button {
+    font-family: 'SF Mono', 'Menlo', monospace;
+    font-size: 13px;
+    letter-spacing: 0.03em;
+    text-transform: uppercase;
+    padding: 0 22px;
+    border-radius: var(--radius);
+    border: none;
+    background: var(--ink);
+    color: var(--paper);
+    cursor: pointer;
+  }
+  .composer button:hover { background: var(--accent); }
+  .composer button:disabled { opacity: 0.4; cursor: default; }
+
+  .quick-tries {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 8px;
+    margin-top: 14px;
+  }
+
+  .quick-tries button {
+    font-family: 'SF Mono', 'Menlo', monospace;
+    font-size: 11.5px;
+    color: var(--ink-soft);
+    background: var(--panel);
+    border: 1px solid var(--line);
+    border-radius: 20px;
+    padding: 7px 13px;
+    cursor: pointer;
+  }
+  .quick-tries button:hover { border-color: var(--accent); color: var(--accent); }
+
+  footer {
+    text-align: center;
+    font-family: 'SF Mono', 'Menlo', monospace;
+    font-size: 11px;
+    color: var(--ink-soft);
+    padding: 10px 0 18px;
+  }
+  footer a { color: var(--accent); text-decoration: none; }
+</style>
+</head>
+<body>
+
+<header>
+  <div class="brand">Northwind Goods <span>Support</span></div>
+  <div class="tag" id="mode-tag">connecting…</div>
+</header>
+
+<main>
+  <div class="chat-shell">
+    <div class="hint-bar">
+      Try a real demo case — mention a <b>customer ID</b> (e.g. <b>CUST005</b>) and an <b>order ID</b> (e.g. <b>ORD1005</b>) and your reason for the refund. The dataset has built-in edge cases: a window violation, a fraud-flag account, a digital good, a final-sale item, lost-in-transit, and wrong-item-delivered.
+    </div>
+
+    <div class="messages" id="messages">
+      <div class="msg system">Session started. Describe your refund request to begin.</div>
+    </div>
+
+    <div class="quick-tries">
+      <button onclick="quickFill('Hi, order ORD1001, customer CUST001, I changed my mind and want a refund')">Standard approval</button>
+      <button onclick="quickFill('Hi, order ORD1005, customer CUST005, I changed my mind and want a refund')">Past the window (edge case)</button>
+      <button onclick="quickFill('Hi, order ORD1004, customer CUST004, item arrived damaged')">Fraud-flagged account</button>
+      <button onclick="quickFill('Hi, order ORD1008, customer CUST008, I want a refund on this software license')">Digital good</button>
+      <button onclick="quickFill('Hi, order ORD1014, customer CUST014, my order never arrived')">Lost in transit</button>
+    </div>
+
+    <div class="composer">
+      <input id="input" type="text" placeholder="Describe your refund request…" autocomplete="off" />
+      <button id="send-btn" onclick="sendMessage()">Send</button>
+    </div>
+  </div>
+</main>
+
+<footer>
+  Reasoning logs for this conversation are visible to support staff in the <a href="/admin">admin dashboard</a>.
+</footer>
+
+<script>
+// Same-origin by default now that this page is served by the same FastAPI
+// app as the API (single deployment, single URL). ?api=... override still
+// works for local dev against a separately-running backend if needed.
+const API_BASE = new URLSearchParams(window.location.search).get('api') || "";
+let sessionId = null;
+
+const messagesEl = document.getElementById('messages');
+const inputEl = document.getElementById('input');
+const sendBtn = document.getElementById('send-btn');
+
+function quickFill(text) {
+  inputEl.value = text;
+  inputEl.focus();
+}
+
+function appendMessage(text, role, decisionClass) {
+  const div = document.createElement('div');
+  div.className = `msg ${role}` + (decisionClass ? ` ${decisionClass}` : '');
+  div.textContent = text;
+  messagesEl.appendChild(div);
+  messagesEl.scrollTop = messagesEl.scrollHeight;
+  return div;
+}
+
+function classifyReply(text) {
+  const t = text.toLowerCase();
+  if (t.includes('escalated to manual review')) return 'decision-escalate';
+  if (t.includes("can't approve") || t.includes('cannot approve')) return 'decision-deny';
+  if (t.includes('approved')) return 'decision-approve';
+  return '';
+}
+
+async function sendMessage() {
+  const text = inputEl.value.trim();
+  if (!text) return;
+
+  appendMessage(text, 'user');
+  inputEl.value = '';
+  sendBtn.disabled = true;
+
+  const typingEl = document.createElement('div');
+  typingEl.className = 'typing';
+  typingEl.textContent = 'agent is reviewing…';
+  messagesEl.appendChild(typingEl);
+  messagesEl.scrollTop = messagesEl.scrollHeight;
+
+  try {
+    const res = await fetch(`${API_BASE}/api/chat`, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ session_id: sessionId, message: text }),
+    });
+    const data = await res.json();
+    sessionId = data.session_id;
+    typingEl.remove();
+    appendMessage(data.reply, 'agent', classifyReply(data.reply));
+  } catch (err) {
+    typingEl.remove();
+    appendMessage('Connection error — is the backend running on localhost:8000?', 'system');
+  } finally {
+    sendBtn.disabled = false;
+    inputEl.focus();
+  }
+}
+
+inputEl.addEventListener('keydown', (e) => {
+  if (e.key === 'Enter') sendMessage();
+});
+
+// Surface actual backend connection + LLM mode status
+fetch(`${API_BASE}/api/health`)
+  .then(r => r.json())
+  .then(data => {
+    const tag = document.getElementById('mode-tag');
+    const labels = { claude: 'live — claude', openai: 'live — gpt-4o', mock: 'live — mock llm' };
+    tag.textContent = labels[data.llm_mode] || 'live';
+  })
+  .catch(() => {
+    document.getElementById('mode-tag').textContent = 'backend offline';
+  });
+</script>
+
+</body>
+</html>
