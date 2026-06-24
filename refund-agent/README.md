@@ -337,3 +337,19 @@ up.
   step means anyone reviewing this can open the two HTML files directly
   in a browser with nothing to install. The API is plain REST +
   WebSocket, so porting to Next.js later is straightforward if needed.
+
+
+
+## Future Enhancements
+
+**If I had more time, there are several directions I would take this project:**
+
+1. Image-based damage verification using vision models to compare customer-uploaded photos with warehouse and delivery images for more accurate claim validation.
+2. Real-time voice support by integrating speech-to-text and text-to-speech services, allowing customers to interact with the agent over phone calls.
+3. Multi-language support so customers can communicate in their preferred language while keeping the same policy engine underneath.
+4. Advanced fraud detection using additional signals such as account history, device fingerprints, and behavioral patterns.
+5. CRM and e-commerce integrations with platforms like Shopify, Salesforce, or custom databases instead of the current demo dataset.
+6. Human-in-the-loop workflows where support agents can review and act on escalated cases directly from the admin dashboard.
+7. Automated evaluation and testing to continuously validate agent decisions against policy rules and ensure consistent behavior.
+
+The current architecture was intentionally designed with modular tools, making these enhancements possible without major changes to the core agent workflow.
