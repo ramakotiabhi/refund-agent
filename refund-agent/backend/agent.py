@@ -1,7 +1,7 @@
 """
 The agent loop: a single LLM-driven tool-calling orchestrator.
 
-Design decision (explain this on camera): there is ONE agent here, not
+Design decision : there is ONE agent here, not
 seven. The LLM's job is conversation, tool selection, and explaining
 outcomes in natural language. It never decides refund eligibility or
 fraud risk itself -- those are deterministic functions in tools/policy.py
